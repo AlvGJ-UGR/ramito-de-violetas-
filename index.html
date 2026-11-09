@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Un ramito de violetas | Arte ASCII</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&family=Playfair+Display:ital,wght@0,500;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0512; --panel:#0e071c; --line:rgba(139,92,246,.30);
+    --violet:#c084fc; --violet-soft:#e9d5ff; --gold:#fcd34d; --ink:#ede9fe; --muted:#8b7fa8;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'Fira Code',ui-monospace,Consolas,'Courier New',monospace}
+  body{min-height:100vh;display:flex;flex-direction:column;background:radial-gradient(ellipse at 50% 0%,#240c45 0%,#0a0512 62%)}
+
+  header{position:sticky;top:0;z-index:30;border-bottom:1px solid var(--line);background:rgba(13,6,26,.82);backdrop-filter:blur(8px);padding:10px 16px}
+  .hwrap{max-width:960px;margin:0 auto;display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;justify-content:space-between}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.06em;color:var(--violet-soft);font-size:.95rem}
+  .brand .flower{color:var(--violet);text-shadow:0 0 10px rgba(168,85,247,.8)}
+  .brand small{color:var(--violet);font-weight:500}
+  .hinfo{display:flex;gap:14px;font-size:.78rem;color:var(--muted);align-items:center}
+  .hinfo .date{color:var(--gold)}
+  #status{color:var(--violet)}
+
+  main{flex:1;width:100%;max-width:960px;margin:0 auto;padding:16px 12px;display:flex;flex-direction:column;align-items:center;gap:14px}
+
+  .stage{position:relative;width:100%;border:1px solid var(--line);border-radius:20px;overflow:hidden;
+    background:radial-gradient(ellipse at 50% 58%,#1d0b38 0%,#0b0416 72%);
+    box-shadow:0 20px 60px rgba(60,10,120,.35),inset 0 0 80px rgba(0,0,0,.55);
+    padding:18px 10px 22px;display:flex;flex-direction:column;align-items:center}
+  .stage::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:4;opacity:.35;
+    background:repeating-linear-gradient(to bottom,rgba(0,0,0,0) 0,rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px)}
+
+  .title{text-align:center;min-height:2.6em;opacity:0;transform:translateY(-8px);transition:opacity 1.4s ease,transform 1.4s ease}
+  .title.on{opacity:1;transform:none}
+  .title .kicker{font-size:.8rem;letter-spacing:.38em;text-transform:uppercase;color:var(--gold);text-shadow:0 0 12px rgba(252,211,77,.55)}
+  .title .kicker span{opacity:.7}
+
+  #wrap{width:100%;display:flex;justify-content:center;position:relative;z-index:2}
+  canvas#art{display:block}
+
+  .caption{position:relative;z-index:5;text-align:center;margin-top:12px;min-height:8.5em;padding:0 8px}
+  .caption p{margin:.3em 0;font-family:'Playfair Display',Georgia,'Times New Roman',serif;font-style:italic;
+    opacity:0;transform:translateY(12px);transition:opacity 1.3s ease,transform 1.3s ease}
+  .caption p.on{opacity:1;transform:none}
+  .l1{font-size:clamp(1.15rem,3.1vw,1.6rem);color:#d8b4fe;text-shadow:0 2px 10px rgba(0,0,0,.9)}
+  .l2{font-size:clamp(1.7rem,5vw,2.8rem);font-weight:500;color:#faf5ff;text-shadow:0 0 22px rgba(192,132,252,.85),0 2px 10px rgba(0,0,0,.9);letter-spacing:.01em}
+  .l3{font-size:clamp(.95rem,2.4vw,1.2rem);color:#a78bfa;font-style:normal!important;font-family:'Fira Code',monospace!important;letter-spacing:.08em}
+
+  .start{position:absolute;inset:0;z-index:6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+    background:rgba(7,3,13,.55);cursor:pointer;transition:opacity .7s ease;text-align:center;padding:20px}
+  .start.hide{opacity:0;pointer-events:none}
+  .start .big{font-family:'Playfair Display',Georgia,serif;font-style:italic;font-size:clamp(1.6rem,5vw,2.6rem);color:#f5f3ff;text-shadow:0 0 22px rgba(192,132,252,.9)}
+  .start .hint{font-size:.9rem;color:var(--violet-soft)}
+  kbd{display:inline-block;padding:3px 10px;border:1px solid var(--violet);border-bottom-width:3px;border-radius:6px;background:#1a0b33;color:#f5f3ff;font-family:inherit;animation:blink 1.6s ease-in-out infinite}
+  @keyframes blink{0%,100%{box-shadow:0 0 0 rgba(192,132,252,0)}50%{box-shadow:0 0 16px rgba(192,132,252,.8)}}
+
+  .controls{width:100%;max-width:760px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;
+    display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;font-size:.82rem}
+  .controls button{font:inherit;cursor:pointer;border-radius:9px;border:1px solid #3b2a63;background:#1b1233;color:#d8cffa;padding:8px 14px;transition:background .2s}
+  .controls button:hover{background:#2a1c4d}
+  .controls button.primary{background:#7e22ce;border-color:#9333ea;color:#fff;box-shadow:0 4px 14px rgba(88,28,135,.55)}
+  .controls button.primary:hover{background:#9333ea}
+  .group{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .speed button{padding:4px 9px}
+  .speed button.on{background:#4c1d95;color:#f5f3ff;font-weight:700}
+  .badge{padding:3px 9px;border-radius:6px;background:#150b2b;border:1px solid #3b2a63;color:#d8cffa}
+  input[type=range]{accent-color:#a855f7;width:90px}
+
+  #note{display:none;width:100%;max-width:760px;border:1px solid rgba(251,191,36,.45);background:rgba(60,40,5,.35);color:#fde68a;
+    border-radius:12px;padding:12px 14px;font-size:.82rem;line-height:1.5}
+  #note a,#note button{color:#fff;font:inherit;background:#7e22ce;border:0;border-radius:7px;padding:3px 10px;margin:4px 6px 0 0;cursor:pointer;text-decoration:none;display:inline-block}
+  #note code{background:rgba(0,0,0,.35);padding:1px 6px;border-radius:4px}
+
+  footer{text-align:center;padding:12px;font-size:.74rem;color:#6d6188;border-top:1px solid rgba(76,29,149,.35)}
+  #yt-wrap{position:fixed;left:-9999px;top:0;width:200px;height:200px;pointer-events:none;opacity:0}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hwrap">
+    <div class="brand"><span class="flower">✿</span>RAMITO_DE_VIOLETAS<small>.asc</small></div>
+    <div class="hinfo"><span class="date">❖ 9 de noviembre</span><span id="status">Pulsa [Enter] para empezar</span></div>
+  </div>
+</header>
+
+<main>
+  <section class="stage" id="stage">
+    <div class="title" id="title"><div class="kicker"><span>✿</span>&nbsp;9 de noviembre&nbsp;<span>✿</span></div></div>
+    <div id="wrap"><canvas id="art" aria-label="Ramo de violetas dibujado con caracteres ASCII"></canvas></div>
+    <div class="caption" id="caption">
+      <p class="l1" id="l1">Quien Cada 9 de Noviembre. Como siempre sin tarjeta,</p>
+      <p class="l2" id="l2">Le mandaba un ramito de violetas</p>
+      <p class="l3" id="l3">♪ Manzanita</p>
+    </div>
+    <div class="start" id="start">
+      <div class="big">Un ramito de violetas</div>
+      <div class="hint">Pulsa <kbd>Enter</kbd> para empezar&nbsp;·&nbsp;o toca aquí</div>
+      <div class="hint" style="opacity:.7">♪ Con sonido: sube el volumen</div>
+    </div>
+  </section>
+
+  <div id="note"></div>
+
+  <div class="controls">
+    <div class="group">
+      <button class="primary" id="btnPlay">▶ Iniciar [Enter]</button>
+      <button id="btnRestart" title="Reiniciar">↺ Reiniciar</button>
+    </div>
+    <div class="group speed">
+      <span style="color:#8b7fa8">Velocidad</span>
+      <button data-speed="0.5">0.5x</button>
+      <button data-speed="1" class="on">1x</button>
+      <button data-speed="1.8">1.8x</button>
+    </div>
+    <div class="group">
+      <button id="btnMute" title="Silenciar / activar sonido">🔊</button>
+      <input type="range" id="vol" min="0" max="100" value="80" aria-label="Volumen">
+      <span class="badge" id="phase">0/5</span>
+    </div>
+  </div>
+</main>
+
+<footer>Homenaje en arte ASCII · «Un ramito de violetas», Manzanita (suena desde el 0:48)</footer>
+
+<div id="yt-wrap" aria-hidden="true"><div id="yt-player"></div></div>
+
+<script>
+(() => {
+'use strict';
+
+/* ================= CONFIG ================= */
+const VIDEO_ID    = 'leTH7YJ4-Ls'; // ID del vídeo de YouTube
+const AUDIO_START = 48;            // segundo donde empieza la canción (0:48)
+
+const COLS = 80, ROWS = 46, CX = 40, BASE_Y = 42;
+const ASPECT = 1.96;               // alto de celda / ancho de celda
+
+/* ================= UTILIDADES ================= */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const rnd = mulberry32(911);
+const clamp01 = v => v<0?0:v>1?1:v;
+const easeOutCubic = t => 1-Math.pow(1-clamp01(t),3);
+const easeOutBack = t => {t=clamp01(t);const c1=1.4,c3=c1+1;return 1+c3*Math.pow(t-1,3)+c1*Math.pow(t-1,2);};
+const smooth = t => {t=clamp01(t);return t*t*(3-2*t);};
+const hex = h => [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
+function ramp(stops, n){
+  const arr = stops.map(hex), out = [];
+  for(let k=0;k<n;k++){
+    const t = (k/(n-1))*(arr.length-1), i = Math.min(arr.length-2, Math.floor(t)), f = t-i, a=arr[i], b=arr[i+1];
+    out.push(`rgb(${(a[0]+(b[0]-a[0])*f)|0},${(a[1]+(b[1]-a[1])*f)|0},${(a[2]+(b[2]-a[2])*f)|0})`);
+  }
+  return out;
+}
+const PALETTES = [
+  ramp(['#f3e8ff','#c084fc','#7e22ce','#4c1d95'], 24),
+  ramp(['#ede9fe','#a78bfa','#6d28d9','#3b0764'], 24),
+  ramp(['#fae8ff','#e879f9','#a21caf','#581c87'], 24)
+];
+const STEM_COLORS = ['#22c55e','#16a34a','#4ade80','#15803d'];
+
+/* ================= ELEMENTOS ================= */
+const $ = id => document.getElementById(id);
+const canvas = $('art'), ctx = canvas.getContext('2d');
+const wrap = $('wrap');
+const startEl = $('start'), statusEl = $('status'), phaseEl = $('phase');
+const btnPlay = $('btnPlay'), btnRestart = $('btnRestart'), btnMute = $('btnMute'), vol = $('vol'), noteEl = $('note');
+const titleEl = $('title'), l1 = $('l1'), l2 = $('l2'), l3 = $('l3');
+
+/* ================= ESTADO ================= */
+const state = { t:0, playing:false, started:false, speed:1 };
+
+/* ================= REJILLA ================= */
+const N = COLS*ROWS;
+const grid = { ch:new Array(N).fill(''), col:new Array(N).fill(''), al:new Float32Array(N) };
+function clearGrid(){ grid.ch.fill(''); grid.col.fill(''); grid.al.fill(1); }
+function put(x,y,ch,color,a){
+  x=Math.round(x); y=Math.round(y);
+  if(x<0||x>=COLS||y<0||y>=ROWS) return;
+  const i=y*COLS+x; grid.ch[i]=ch; grid.col[i]=color; grid.al[i]=(a===undefined?1:a);
+}
+const halos = [];
+
+/* ================= DATOS DEL RAMO ================= */
+const FLOWERS = [
+  {x:40,y:7, R:3.6,pal:0},{x:35,y:15,R:3.4,pal:1},{x:45,y:15,R:3.4,pal:0},{x:40,y:21,R:3.2,pal:2},
+  {x:28,y:10,R:3.3,pal:2},{x:52,y:10,R:3.3,pal:1},{x:25,y:20,R:3.0,pal:0},{x:55,y:20,R:3.0,pal:2},
+  {x:17,y:15,R:3.1,pal:1},{x:63,y:15,R:3.1,pal:0},
+  {x:30,y:5,R:1.6,bud:1,pal:0},{x:50,y:5,R:1.6,bud:1,pal:0},{x:12,y:22,R:1.6,bud:1,pal:0},{x:68,y:22,R:1.6,bud:1,pal:0}
+];
+FLOWERS.forEach((f,i)=>{
+  f.seed = rnd()*6.28;
+  f.s0 = i<10 ? 2.2+i*0.5 : 5.5+(i-10)*0.5;
+  f.s1 = f.s0 + (i<10 ? 3.4 : 2.6);
+  f.b0 = f.s1 - 0.3;
+  f.th = (rnd()-.5)*0.5;
+});
+const DRAW_ORDER = FLOWERS.slice().sort((a,b)=>a.y-b.y);
+
+const LEAVES = [
+  [35,33,-38,4.4],[45,33,38,4.4],[29,32,-62,3.8],[51,32,62,3.8],
+  [23,30,-82,3.2],[57,30,82,3.2],[37,31,-14,3.6],[43,31,14,3.6]
+].map((a,i)=>({x:a[0],y:a[1],rot:a[2]*Math.PI/180,S:a[3],t0:5+i*0.55,dur:1.8}));
+
+// Lazo: [dy, mitad izquierda, caracter central] (la derecha se refleja)
+const BOW_ROWS = [
+  [-3,'_.-~~~~-.',' '],
+  [-2,'/  ,--,   \\','_'],
+  [-1,'(  (    )   (','o'],
+  [ 0,'\\  `--\'   /',' '],
+  [ 1,'`-.____.\'',' '],
+  [ 2,'/ ','|'],
+  [ 3,'/  ','|']
+];
+const MIRROR = {'/':'\\','\\':'/','(':')',')':'(','`':'\'','\'':'`','[':']',']':'[','<':'>','>':'<'};
+function mirrorStr(s){ return s.split('').reverse().map(c=>MIRROR[c]||c).join(''); }
+const BOW_CELLS = [];
+BOW_ROWS.forEach(([dy,left,c])=>{
+  const full = left + c + mirrorStr(left), start = -left.length;
+  for(let j=0;j<full.length;j++){
+    const ch = full[j]; if(ch===' ') continue;
+    const dx = start + j;
+    const color = ch==='o' ? '#fde68a' : (dy>=2 ? '#f43f5e' : '#fb7185');
+    BOW_CELLS.push({dx,dy,ch,color});
+  }
+});
+BOW_CELLS.sort((a,b)=>Math.abs(a.dx)-Math.abs(b.dx) || a.dy-b.dy);
+
+const PAPER_TOP = 33;
+const SOIL = [];
+for(let c=14;c<=66;c++){
+  SOIL.push({x:c,y:44,ch:['_','_','-','~',',','.'][Math.floor(rnd()*6)]});
+  if(rnd()<0.5) SOIL.push({x:c,y:45,ch:[':','.',';',','][Math.floor(rnd()*4)]});
+}
+const STARS = Array.from({length:90},()=>({x:Math.floor(rnd()*COLS),y:Math.floor(rnd()*(ROWS-6)),ph:rnd()*6.28,ch:rnd()<0.8?'.':'+'}));
+const DUST = Array.from({length:46},()=>({
+  x:rnd()*COLS,y:rnd()*ROWS,v:0.8+rnd()*1.8,ph:rnd()*6.28,
+  ch:['.','·','*','+','˙','✦'][Math.floor(rnd()*6)],
+  col:rnd()<0.4?'#fde68a':(rnd()<0.5?'#e9d5ff':'#c084fc')
+}));
+function updateDust(dt){
+  DUST.forEach(p=>{ p.y-=p.v*dt; if(p.y<-1){p.y=ROWS+1;p.x=rnd()*COLS;} });
+}
+
+/* ================= DIBUJO DE ELEMENTOS ================= */
+function drawStem(f,t,life){
+  const p = clamp01((t-f.s0)/(f.s1-f.s0));
+  if(p<=0) return;
+  const amp = 0.25 + 0.9*life;
+  const ex = f.x + Math.sin(t*0.9+f.seed)*amp;
+  const ey = f.y + 1 + Math.cos(t*0.7+f.seed)*0.35*life;
+  const P0x=CX, P0y=BASE_Y, P1x=CX+(ex-CX)*0.12, P1y=BASE_Y-(BASE_Y-ey)*0.55;
+  const steps=170;
+  let tipX=P0x, tipY=P0y;
+  for(let i=0;i<=steps;i++){
+    const u=i/steps; if(u>p) break;
+    const w=1-u;
+    const x=w*w*P0x+2*w*u*P1x+u*u*ex;
+    const y=w*w*P0y+2*w*u*P1y+u*u*ey;
+    const dx=2*w*(P1x-P0x)+2*u*(ex-P1x);
+    const dy=2*w*(P1y-P0y)+2*u*(ey-P1y);
+    const a=Math.atan2(dx,-dy*ASPECT)*180/Math.PI, aa=Math.abs(a);
+    const ch = aa<22 ? '|' : aa<62 ? (a>0?'/':'\\') : '-';
+    put(x,y,ch,STEM_COLORS[(i>>3)%STEM_COLORS.length]);
+    tipX=x; tipY=y;
+  }
+  if(p<1) put(tipX,tipY,'*','#bbf7d0');
+  f.cx=ex; f.cy=ey-1;
+}
+
+function drawLeaf(L,t,life){
+  const p=clamp01((t-L.t0)/L.dur); if(p<=0) return;
+  const S=L.S*easeOutCubic(p)+0.01;
+  const th=L.rot+Math.sin(t*0.9+L.x)*0.05*life;
+  const sn=Math.sin(th), cs=Math.cos(th);
+  const rad=2.4*S;
+  const c0=Math.floor(L.x-rad), c1=Math.ceil(L.x+rad), r0=Math.floor(L.y-rad/ASPECT), r1=Math.ceil(L.y+rad/ASPECT);
+  const vein = Math.abs(th)<0.35?'|':(th<0?'\\':'/');
+  for(let r=r0;r<=r1;r++){
+    for(let c=c0;c<=c1;c++){
+      const ux=c-L.x, uy=-(r-L.y)*ASPECT;
+      const ly=ux*sn+uy*cs, lx=ux*cs-uy*sn;
+      const hx=lx/S, hy=ly/S-1;
+      const q=hx*hx+hy*hy-1, v=q*q*q-hx*hx*hy*hy*hy;
+      if(v>0) continue;
+      if(v>-0.07){ put(c,r,'#','#4ade80'); continue; }
+      if(Math.abs(lx)<0.55 && ly>0.4*S){ put(c,r,vein,'#bbf7d0'); continue; }
+      const col = hy>0.35 ? '#22c55e' : (hx>0 ? '#15803d' : '#16a34a');
+      const ch = Math.abs(hx)<0.5 ? ':' : (((c+r)&1)?'.':',');
+      put(c,r,ch,col);
+    }
+  }
+}
+
+function drawFlower(f,t,life){
+  const bp = clamp01((t-f.b0)/(f.bud?1.8:2.6));
+  const p = f.bud ? Math.min(bp,0.28) : bp;
+  if(p<=0 || f.cx===undefined) return;
+  const cx=f.cx, cy=f.cy, lut=PALETTES[f.pal||0];
+
+  if(p<0.3){ // capullo
+    const s=p/0.3, rb=f.R*0.45*s+0.35, rw=rb*ASPECT;
+    for(let r=Math.floor(cy-rb-1);r<=Math.ceil(cy+rb+1);r++){
+      for(let c=Math.floor(cx-rw-1);c<=Math.ceil(cx+rw+1);c++){
+        const dx=c-cx, dy=(r-cy)*ASPECT;
+        const d=Math.hypot(dx,dy*0.85)/rw; // ligeramente ovalado
+        if(d>1) continue;
+        put(c,r,d<0.45?'@':(d<0.8?'%':'o'), d<0.45?'#c4b5fd':'#7c3aed');
+      }
+    }
+    put(cx,cy+rb+1,'v','#4ade80');
+    if(rb>1.2){ put(cx-1,cy+rb+0.4,'\\','#4ade80'); put(cx+1,cy+rb+0.4,'/','#4ade80'); }
+    return;
+  }
+
+  const s=easeOutBack((p-0.3)/0.7);
+  const Rw=f.R*ASPECT*s, th0=Math.PI/2+f.th;
+  const per=2*Math.PI/5;
+  for(let r=Math.floor(cy-f.R*s-1);r<=Math.ceil(cy+f.R*s+1);r++){
+    for(let c=Math.floor(cx-Rw-1);c<=Math.ceil(cx+Rw+1);c++){
+      const dx=c-cx, dy=(r-cy)*ASPECT;
+      const dist=Math.hypot(dx,dy);
+      if(dist>Rw*1.01) continue;
+      const ang=Math.atan2(dy,dx);
+      const rr=Rw*(0.66+0.34*Math.cos(5*(ang-th0)));
+      const u=dist/rr; if(u>1) continue;
+      if(u<0.14){ put(c,r,'@','#fde047'); continue; }
+      if(u<0.26){ put(c,r,'o','#fef3c7'); continue; }
+      let d=((ang-th0)%per+per)%per; if(d>per/2) d-=per; // distancia al eje del pétalo
+      const t01=(u-0.26)/0.74;
+      if(Math.abs(d)<0.07 && u>0.3 && u<0.9){ put(c,r,':','#4c1d95'); continue; }
+      let dd=Math.atan2(Math.sin(ang-th0),Math.cos(ang-th0)); // pétalo inferior
+      if(Math.abs(dd)<0.2 && u>0.28 && u<0.62){ put(c,r,'=','#fdf4ff'); continue; }
+      const ch = t01<0.3?'#':(t01<0.6?'%':(t01<0.85?'*':'o'));
+      put(c,r,ch,lut[Math.min(23,Math.floor(t01*23.99))]);
+    }
+  }
+  halos.push({x:cx,y:cy,r:Rw*1.5,a:0.30*Math.min(1,s)});
+}
+
+function drawPaper(t){
+  const pp=clamp01((t-12)/3.2); if(pp<=0) return 0;
+  const rows=BASE_Y-PAPER_TOP;
+  for(let y=PAPER_TOP;y<=BASE_Y;y++){
+    const k=(BASE_Y-y)/rows; if(k>pp*1.04) continue;
+    const q=(y-PAPER_TOP)/rows;
+    const hw=13.8*(1-q)+0.8*q;
+    const xl=Math.round(CX-hw), xr=Math.round(CX+hw);
+    for(let x=xl;x<=xr;x++){
+      if(y===PAPER_TOP){ put(x,y,'_','#f5e6c8'); continue; }
+      if(x===xl){ put(x,y,'\\','#f5e6c8'); continue; }
+      if(x===xr){ put(x,y,'/','#bfa97f'); continue; }
+      const light = x<CX-2;
+      const s=(x*3+y*5)%11;
+      let ch=' ', col=light?'#e7d5b0':'#c7b18a';
+      if(s===0){ ch='♥'; col='#fb7185'; }
+      else if((x+y)%9===0){ ch='/'; col=light?'#cdb88e':'#a99371'; }
+      else if(s%3===0){ ch=':'; col=light?'#bfa97f':'#9a8561'; }
+      else if(s%3===1){ ch='.'; col=light?'#cdb88e':'#a99371'; }
+      put(x,y,ch,col);
+    }
+  }
+  return pp;
+}
+
+function drawBow(t){
+  const bp=clamp01((t-14.5)/2.5); if(bp<=0) return;
+  const lim=Math.ceil(bp*BOW_CELLS.length);
+  for(let i=0;i<lim;i++){
+    const b=BOW_CELLS[i];
+    put(CX+b.dx,PAPER_TOP+b.dy,b.ch,b.color);
+  }
+}
+
+/* ================= ESCENA ================= */
+function render(wall){
+  const t=state.t, life=smooth((t-12)/5);
+  clearGrid(); halos.length=0;
+
+  // estrellas de fondo
+  STARS.forEach(s=>put(s.x,s.y,s.ch,'#a78bfa',0.10+0.30*(0.5+0.5*Math.sin(wall*0.8+s.ph))));
+
+  // tierra
+  const paperProg=clamp01((t-12)/3.2);
+  const soilA=0.9-0.5*paperProg;
+  SOIL.forEach(s=>put(s.x,s.y,s.ch,'#8b6b4a',soilA));
+  if(t>0.6){
+    const mw=Math.floor(smooth((t-0.6)/1.5)*6);
+    for(let dx=-mw;dx<=mw;dx++) put(CX+dx,43,dx===0?'^':(Math.abs(dx)<mw?'~':'.'),'#a47f57',soilA);
+  }
+  if(t<1.4) put(CX,43,'o','#f59e0b',0.6+0.4*Math.sin(wall*6));
+  else if(t<2.2) put(CX,BASE_Y,'|','#4ade80');
+
+  // tallos, hojas, flores
+  DRAW_ORDER.forEach(f=>drawStem(f,t,life));
+  LEAVES.forEach(L=>drawLeaf(L,t,life));
+  DRAW_ORDER.forEach(f=>drawFlower(f,t,life));
+
+  // envoltorio y lazo
+  drawPaper(t);
+  drawBow(t);
+
+  // polen y destellos
+  const da=smooth((t-10)/4);
+  if(da>0) DUST.forEach(p=>{
+    const x=Math.round(p.x+Math.sin(wall*1.1+p.ph)*1.6), y=Math.round(p.y);
+    if(x<0||x>=COLS||y<0||y>=ROWS) return;
+    if(grid.ch[y*COLS+x]==='') put(x,y,p.ch,p.col,da*(0.5+0.5*Math.sin(wall*2+p.ph)));
+  });
+
+  paint();
+}
+
+/* ================= PINTADO EN CANVAS ================= */
+let cellW=8, cellH=15, fontPx=13, dpr=1;
+function resize(){
+  dpr=Math.min(window.devicePixelRatio||1,2);
+  const availW=Math.max(280,wrap.clientWidth);
+  let fs=availW/COLS/0.6, ch=fs*1.18;
+  const maxH=Math.max(340,Math.min(window.innerHeight*0.66,760));
+  if(ch*ROWS>maxH){ ch=maxH/ROWS; fs=ch/1.18; }
+  fontPx=fs; cellH=ch; cellW=fs*0.6;
+  const w=Math.round(COLS*cellW), h=Math.round(ROWS*cellH);
+  canvas.style.width=w+'px'; canvas.style.height=h+'px';
+  canvas.width=Math.round(w*dpr); canvas.height=Math.round(h*dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+
+function paint(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  // halos suaves detrás de las flores
+  for(const hl of halos){
+    const x=hl.x*cellW+cellW/2, y=hl.y*cellH+cellH/2, r=hl.r*cellW;
+    const g=ctx.createRadialGradient(x,y,0,x,y,r);
+    g.addColorStop(0,`rgba(168,85,247,${hl.a})`); g.addColorStop(1,'rgba(168,85,247,0)');
+    ctx.fillStyle=g; ctx.fillRect(x-r,y-r,r*2,r*2);
+  }
+  ctx.font=`700 ${(fontPx*0.98).toFixed(2)}px "Fira Code",Consolas,"Courier New",monospace`;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  let lastCol='', lastAl=1;
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      const i=r*COLS+c, ch=grid.ch[i];
+      if(!ch||ch===' ') continue;
+      const col=grid.col[i], al=grid.al[i];
+      if(col!==lastCol){ ctx.fillStyle=col; lastCol=col; }
+      if(al!==lastAl){ ctx.globalAlpha=al; lastAl=al; }
+      ctx.fillText(ch,(c+0.5)*cellW,(r+0.55)*cellH);
+    }
+  }
+  ctx.globalAlpha=1;
+}
+
+/* ================= FASES Y TEXTO ================= */
+const PHASE_NAMES=['Esperando','Semilla','Tallos y hojas','Floración','Envoltorio y lazo','Dedicatoria'];
+function phaseOf(t){ return !state.started?0 : t<2.2?1 : t<9?2 : t<12.5?3 : t<16.5?4 : 5; }
+let lastPhase=-1;
+function updateUI(){
+  const t=state.t, ph=phaseOf(t);
+  if(ph!==lastPhase){
+    lastPhase=ph; phaseEl.textContent=ph+'/5';
+    statusEl.textContent = ph===0 ? 'Pulsa [Enter] para empezar' : 'Fase '+ph+': '+PHASE_NAMES[ph];
+  }
+  titleEl.classList.toggle('on', state.started && t>=16.5);
+  l1.classList.toggle('on', state.started && t>=17.2);
+  l2.classList.toggle('on', state.started && t>=18.4);
+  l3.classList.toggle('on', state.started && t>=20);
+}
+
+/* ================= AUDIO (YouTube) ================= */
+const audio={yt:null,ready:false,want:false,needSeek:true,volume:80,muted:false,timer:null,failed:false};
+
+function showNote(html){ noteEl.innerHTML=html; noteEl.style.display='block'; bindNote(); }
+function hideNote(){ noteEl.style.display='none'; }
+function bindNote(){
+  const retry=noteEl.querySelector('[data-retry]');
+  if(retry) retry.onclick=()=>{ hideNote(); audio.failed=false; audio.needSeek=true; audioStart(true); };
+}
+function ytLink(){ return `<a href="https://www.youtube.com/watch?v=${VIDEO_ID}&t=${AUDIO_START}s" target="_blank" rel="noopener">Abrir en YouTube (0:48)</a>`; }
+
+function loadYT(){
+  const s=document.createElement('script');
+  s.src='https://www.youtube.com/iframe_api';
+  s.onerror=()=>{ audio.failed=true; };
+  document.head.appendChild(s);
+}
+window.onYouTubeIframeAPIReady=function(){
+  const vars={playsinline:1,controls:0,disablekb:1,fs:0,rel:0,modestbranding:1,start:AUDIO_START};
+  if(location.protocol==='http:'||location.protocol==='https:') vars.origin=location.origin;
+  audio.yt=new YT.Player('yt-player',{
+    width:'200',height:'200',videoId:VIDEO_ID,playerVars:vars,
+    events:{
+      onReady:()=>{ audio.ready=true; try{audio.yt.setVolume(audio.volume);}catch(e){} if(audio.want) doPlay(); },
+      onError:(e)=>{
+        audio.failed=true;
+        const file=location.protocol==='file:';
+        showNote('🎵 YouTube no ha dejado reproducir la canción (código '+e.data+'). '+
+          (file?'Es normal si abres el archivo haciendo doble clic (<code>file://</code>): YouTube bloquea su reproductor así. Sírvelo con un servidor local (<code>python -m http.server</code> en esa carpeta y abre <code>http://localhost:8000</code>) o súbelo a cualquier hosting. ':'Puede que el vídeo no permita incrustarse o que el ID haya cambiado. ')+
+          ytLink()+' <button data-retry>Reintentar</button>');
+      }
+    }
+  });
+};
+
+function doPlay(){
+  try{
+    if(audio.needSeek){ audio.yt.seekTo(AUDIO_START,true); audio.needSeek=false; }
+    if(audio.muted) audio.yt.mute(); else audio.yt.unMute();
+    audio.yt.setVolume(audio.volume);
+    audio.yt.playVideo();
+  }catch(e){}
+}
+function audioStart(seek){
+  audio.want=true; if(seek) audio.needSeek=true;
+  if(audio.ready) doPlay();
+  clearTimeout(audio.timer);
+  audio.timer=setTimeout(()=>{
+    if(!audio.want||audio.failed) return;
+    let s=-2; try{ s=audio.ready?audio.yt.getPlayerState():-2; }catch(e){}
+    if(s!==1&&s!==3){
+      showNote('🎵 La canción no ha arrancado (el navegador o la conexión lo impiden). '+
+        '<button data-retry>Reintentar</button> '+ytLink());
+    } else hideNote();
+  },4500);
+}
+function audioPause(){
+  audio.want=false; clearTimeout(audio.timer);
+  if(audio.ready) try{audio.yt.pauseVideo();}catch(e){}
+}
+
+/* ================= CONTROLES ================= */
+function play(){
+  if(!state.started){ state.started=true; startEl.classList.add('hide'); audioStart(true); }
+  else audioStart(false);
+  state.playing=true; btnPlay.textContent='⏸ Pausar';
+}
+function pause(){
+  state.playing=false; btnPlay.textContent='▶ Continuar'; audioPause();
+}
+function toggle(){ state.playing?pause():play(); }
+function restart(){
+  state.t=0; state.started=true; lastPhase=-1; startEl.classList.add('hide'); hideNote();
+  audio.failed=false; audio.needSeek=true; audioStart(true);
+  state.playing=true; btnPlay.textContent='⏸ Pausar';
+}
+
+btnPlay.addEventListener('click',()=>{ toggle(); btnPlay.blur(); });
+btnRestart.addEventListener('click',()=>{ restart(); btnRestart.blur(); });
+startEl.addEventListener('click',()=>{ if(!state.started) play(); });
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'){ e.preventDefault(); toggle(); }
+});
+document.querySelectorAll('.speed button').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.speed button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); state.speed=parseFloat(b.dataset.speed); b.blur();
+  });
+});
+btnMute.addEventListener('click',()=>{
+  audio.muted=!audio.muted; btnMute.textContent=audio.muted?'🔇':'🔊';
+  if(audio.ready) try{ audio.muted?audio.yt.mute():audio.yt.unMute(); }catch(e){}
+  btnMute.blur();
+});
+vol.addEventListener('input',()=>{
+  audio.volume=parseInt(vol.value,10);
+  if(audio.muted&&audio.volume>0){ audio.muted=false; btnMute.textContent='🔊'; }
+  if(audio.ready) try{ audio.yt.setVolume(audio.volume); if(!audio.muted) audio.yt.unMute(); }catch(e){}
+});
+
+/* ================= BUCLE ================= */
+let last=performance.now(), acc=0;
+function frame(now){
+  const dt=Math.min(0.1,(now-last)/1000); last=now; acc+=dt;
+  if(acc>=1/30){
+    const step=acc; acc=0;
+    if(state.playing){ state.t+=step*state.speed; updateDust(step*state.speed); }
+    render(now/1000); updateUI();
+  }
+  requestAnimationFrame(frame);
+}
+
+window.addEventListener('resize',()=>{ resize(); render(performance.now()/1000); });
+loadYT();
+const boot=()=>{ resize(); render(0); requestAnimationFrame(frame); };
+if(document.fonts&&document.fonts.load){
+  Promise.race([document.fonts.load('700 14px "Fira Code"'),new Promise(r=>setTimeout(r,1500))]).then(boot,boot);
+} else boot();
+})();
+</script>
+</body>
+</html>
